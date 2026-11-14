@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оставить заявку</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            display: flex;
+            justify-content: center;
+            padding: 50px 15px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        input, textarea, button {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        #result {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Оставить заявку</h2>
+
+    <form id="leadForm">
+        <input name="name" placeholder="Ваше имя" required>
+        <input name="phone" placeholder="Телефон" required>
+        <input name="service" placeholder="Какая услуга нужна?" required>
+        <textarea name="comment" placeholder="Комментарий"></textarea>
+
+        <button type="submit">Отправить заявку</button>
+    </form>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    const form = document.getElementById("leadForm");
+    const result = document.getElementById("result");
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const button = form.querySelector("button");
+        button.disabled = true;
+        result.textContent = "Отправка...";
+
+        const data = Object.fromEntries(new FormData(form));
+
+        try {
+            const response = await fetch("/api/leads", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            const answer = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    answer.detail?.[0]?.msg || "Ошибка отправки"
+                );
+            }
+
+            result.textContent = answer.message;
+            form.reset();
+
+        } catch (error) {
+            result.textContent = "Ошибка: " + error.message;
+        } finally {
+            button.disabled = false;
+        }
+    });
+</script>
+
+</body>
+</html>

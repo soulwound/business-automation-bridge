@@ -1,0 +1,571 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления заявками</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            padding: 30px;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: auto;
+        }
+
+        h1 { margin-bottom: 25px; }
+        h2 { margin-top: 35px; margin-bottom: 15px; }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 10px;
+            overflow-x: auto;
+            padding: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+
+        th, td {
+            padding: 13px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f8fafc;
+            white-space: nowrap;
+        }
+
+        select {
+            padding: 7px;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 9px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        button:hover { background: #1d4ed8; }
+
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .resolve-button {
+            display: block;
+            width: 100%;
+            min-width: 150px;
+            margin: 0 0 7px 0;
+            font-size: 12px;
+        }
+
+        .resolve-sqlite {
+            background: #2563eb;
+        }
+
+        .resolve-sheets {
+            background: #0f766e;
+        }
+
+        .resolve-sqlite:hover {
+            background: #1d4ed8;
+        }
+
+        .resolve-sheets:hover {
+            background: #115e59;
+        }
+
+        #message, #logsMessage, #conflictsMessage {
+            margin-bottom: 15px;
+        }
+
+        .level {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .level-INFO {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .level-WARNING {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .level-ERROR {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .empty {
+            text-align: center;
+            color: #64748b;
+            padding: 20px;
+        }
+
+        .log-message {
+            min-width: 280px;
+            max-width: 550px;
+            overflow-wrap: anywhere;
+        }
+
+        .conflict-value {
+            min-width: 180px;
+            max-width: 350px;
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
+        }
+
+        .success-message {
+            color: #15803d;
+        }
+
+        .error-message {
+            color: #b91c1c;
+        }
+
+        .conflict-actions {
+            min-width: 170px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>Заявки клиентов</h1>
+
+    <button onclick="loadLeads()">Обновить список</button>
+
+    <div id="message"></div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Имя</th>
+                    <th>Телефон</th>
+                    <th>Услуга</th>
+                    <th>Комментарий</th>
+                    <th>Дата</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody id="leadsTable"></tbody>
+        </table>
+    </div>
+
+    <h2>Открытые конфликты</h2>
+
+    <button onclick="loadConflicts()">Обновить конфликты</button>
+
+    <div id="conflictsMessage"></div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Дата обнаружения</th>
+                    <th>ID заявки</th>
+                    <th>Поле</th>
+                    <th>Значение SQLite</th>
+                    <th>Значение Google Sheets</th>
+                    <th>Разрешение</th>
+                </tr>
+            </thead>
+            <tbody id="conflictsTable"></tbody>
+        </table>
+    </div>
+
+    <h2>Журнал синхронизации</h2>
+
+    <button onclick="loadSyncLogs()">Обновить журнал</button>
+
+    <div id="logsMessage"></div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Время</th>
+                    <th>Уровень</th>
+                    <th>Операция</th>
+                    <th>ID заявки</th>
+                    <th>Описание</th>
+                </tr>
+            </thead>
+            <tbody id="logsTable"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    function formatDate(value) {
+        if (!value) return "—";
+
+        const date = new Date(value);
+
+        return isNaN(date.getTime())
+            ? String(value)
+            : date.toLocaleString("ru-RU");
+    }
+
+    function formatValue(value) {
+        if (value === null || value === undefined) return "—";
+
+        if (typeof value === "object") {
+            return JSON.stringify(value, null, 2);
+        }
+
+        return String(value);
+    }
+
+    async function loadLeads() {
+        const table = document.getElementById("leadsTable");
+        const message = document.getElementById("message");
+
+        message.textContent = "Загрузка...";
+
+        try {
+            const response = await fetch("/api/leads");
+
+            if (!response.ok) {
+                throw new Error("Не удалось загрузить заявки");
+            }
+
+            const leads = await response.json();
+            table.replaceChildren();
+
+            leads.forEach(lead => {
+                const row = document.createElement("tr");
+
+                const values = [
+                    lead.id,
+                    lead.name,
+                    lead.phone,
+                    lead.service,
+                    lead.comment || "",
+                    lead.created_at
+                ];
+
+                values.forEach(value => {
+                    const cell = document.createElement("td");
+                    cell.textContent = value ?? "";
+                    row.appendChild(cell);
+                });
+
+                const statusCell = document.createElement("td");
+                const select = document.createElement("select");
+
+                ["Новая", "В работе", "Завершена"].forEach(status => {
+                    const option = document.createElement("option");
+                    option.value = status;
+                    option.textContent = status;
+                    select.appendChild(option);
+                });
+
+                select.value = lead.status;
+
+                select.addEventListener("change", async () => {
+                    const previousStatus = lead.status;
+                    select.disabled = true;
+
+                    try {
+                        const update = await fetch(
+                            `/api/leads/${lead.id}/status`,
+                            {
+                                method: "PATCH",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    status: select.value
+                                })
+                            }
+                        );
+
+                        if (!update.ok) {
+                            throw new Error("Не удалось изменить статус");
+                        }
+
+                        lead.status = select.value;
+                        message.textContent =
+                            `Статус заявки №${lead.id} обновлён`;
+
+                    } catch (error) {
+                        message.textContent = error.message;
+                        select.value = previousStatus;
+                    } finally {
+                        select.disabled = false;
+                    }
+                });
+
+                statusCell.appendChild(select);
+                row.appendChild(statusCell);
+                table.appendChild(row);
+            });
+
+            message.textContent = `Заявок: ${leads.length}`;
+
+        } catch (error) {
+            message.textContent = error.message;
+        }
+    }
+
+    async function loadSyncLogs() {
+        const table = document.getElementById("logsTable");
+        const message = document.getElementById("logsMessage");
+
+        message.textContent = "Загрузка журнала...";
+
+        try {
+            const response = await fetch("/api/sync-logs?limit=100");
+
+            if (!response.ok) {
+                throw new Error("Не удалось загрузить журнал");
+            }
+
+            const logs = await response.json();
+            table.replaceChildren();
+
+            if (logs.length === 0) {
+                const row = document.createElement("tr");
+                const cell = document.createElement("td");
+
+                cell.colSpan = 5;
+                cell.className = "empty";
+                cell.textContent = "Записей пока нет";
+
+                row.appendChild(cell);
+                table.appendChild(row);
+            }
+
+            logs.forEach(log => {
+                const row = document.createElement("tr");
+
+                const dateCell = document.createElement("td");
+                dateCell.textContent = formatDate(log.created_at);
+                row.appendChild(dateCell);
+
+                const levelCell = document.createElement("td");
+                const badge = document.createElement("span");
+
+                badge.className = `level level-${log.level}`;
+                badge.textContent = log.level;
+
+                levelCell.appendChild(badge);
+                row.appendChild(levelCell);
+
+                const actionCell = document.createElement("td");
+                actionCell.textContent = log.action;
+                row.appendChild(actionCell);
+
+                const idCell = document.createElement("td");
+                idCell.textContent = log.lead_id ?? "—";
+                row.appendChild(idCell);
+
+                const messageCell = document.createElement("td");
+                messageCell.className = "log-message";
+                messageCell.textContent = log.message;
+                row.appendChild(messageCell);
+
+                table.appendChild(row);
+            });
+
+            message.textContent = `Событий в журнале: ${logs.length}`;
+
+        } catch (error) {
+            message.textContent = error.message;
+        }
+    }
+
+    async function resolveConflict(conflictId, source, button) {
+        const sourceName = source === "sqlite"
+            ? "SQLite"
+            : "Google Sheets";
+
+        const confirmed = confirm(
+            `Оставить значение из ${sourceName} для конфликта №${conflictId}?\n\n` +
+            "Вторая система будет обновлена выбранным значением."
+        );
+
+        if (!confirmed) return;
+
+        const message = document.getElementById("conflictsMessage");
+        const row = button.closest("tr");
+        const buttons = row.querySelectorAll("button");
+
+        buttons.forEach(item => item.disabled = true);
+
+        message.className = "";
+        message.textContent = `Разрешение конфликта №${conflictId}...`;
+
+        try {
+            const response = await fetch(
+                `/api/sync-conflicts/${conflictId}/resolve`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ source })
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    result.detail || "Не удалось разрешить конфликт"
+                );
+            }
+
+            message.className = "success-message";
+            message.textContent =
+                `Конфликт №${conflictId} успешно разрешён. ` +
+                `Выбрано значение из ${sourceName}.`;
+
+            await loadConflicts();
+            await loadSyncLogs();
+
+        } catch (error) {
+            message.className = "error-message";
+            message.textContent = error.message;
+
+            buttons.forEach(item => item.disabled = false);
+        }
+    }
+
+    async function loadConflicts() {
+        const table = document.getElementById("conflictsTable");
+        const message = document.getElementById("conflictsMessage");
+
+        message.textContent = "Загрузка конфликтов...";
+
+        try {
+            const response = await fetch("/api/sync-conflicts");
+
+            if (!response.ok) {
+                throw new Error("Не удалось загрузить конфликты");
+            }
+
+            const conflicts = await response.json();
+            table.replaceChildren();
+
+            if (conflicts.length === 0) {
+                const row = document.createElement("tr");
+                const cell = document.createElement("td");
+
+                cell.colSpan = 6;
+                cell.className = "empty";
+                cell.textContent = "Открытых конфликтов нет";
+
+                row.appendChild(cell);
+                table.appendChild(row);
+            }
+
+            conflicts.forEach(conflict => {
+                const row = document.createElement("tr");
+
+                const values = [
+                    formatDate(conflict.detected_at),
+                    conflict.lead_id,
+                    conflict.field_name
+                ];
+
+                values.forEach(value => {
+                    const cell = document.createElement("td");
+                    cell.textContent = value ?? "—";
+                    row.appendChild(cell);
+                });
+
+                const sqliteCell = document.createElement("td");
+                sqliteCell.className = "conflict-value";
+                sqliteCell.textContent =
+                    formatValue(conflict.sqlite_value);
+                row.appendChild(sqliteCell);
+
+                const sheetsCell = document.createElement("td");
+                sheetsCell.className = "conflict-value";
+                sheetsCell.textContent =
+                    formatValue(conflict.sheets_value);
+                row.appendChild(sheetsCell);
+
+                const actionsCell = document.createElement("td");
+                actionsCell.className = "conflict-actions";
+
+                const sqliteButton = document.createElement("button");
+                sqliteButton.className =
+                    "resolve-button resolve-sqlite";
+                sqliteButton.textContent = "Оставить SQLite";
+                sqliteButton.addEventListener("click", () => {
+                    resolveConflict(
+                        conflict.id,
+                        "sqlite",
+                        sqliteButton
+                    );
+                });
+
+                const sheetsButton = document.createElement("button");
+                sheetsButton.className =
+                    "resolve-button resolve-sheets";
+                sheetsButton.textContent = "Оставить Google Sheets";
+                sheetsButton.addEventListener("click", () => {
+                    resolveConflict(
+                        conflict.id,
+                        "sheets",
+                        sheetsButton
+                    );
+                });
+
+                actionsCell.appendChild(sqliteButton);
+                actionsCell.appendChild(sheetsButton);
+                row.appendChild(actionsCell);
+
+                table.appendChild(row);
+            });
+
+            message.textContent = `Открытых конфликтов: ${conflicts.length}`;
+
+        } catch (error) {
+            message.className = "error-message";
+            message.textContent = error.message;
+        }
+    }
+
+    loadLeads();
+    loadSyncLogs();
+    loadConflicts();
+
+    setInterval(loadSyncLogs, 30000);
+    setInterval(loadConflicts, 30000);
+</script>
+
+</body>
+</html>

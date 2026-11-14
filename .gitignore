@@ -1,0 +1,14 @@
+credentials/*
+!credentials/.gitkeep
+
+.env
+
+venv/
+.venv/
+
+__pycache__/
+*.pyc
+
+app/database/*.db
+
+.idea/
