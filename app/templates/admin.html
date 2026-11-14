@@ -4,228 +4,902 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель управления заявками</title>
+    <title>Business Automation Bridge — Админ-панель</title>
 
-    <style>
+<style>
+    :root {
+        --navy: #101827;
+        --blue: #2563eb;
+        --blue-hover: #1d4ed8;
+        --text: #172033;
+        --muted: #64748b;
+        --border: #e6ebf2;
+        --background: #f3f6fb;
+        --white: #ffffff;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        padding: 36px 24px;
+        font-family: Inter, -apple-system, BlinkMacSystemFont,
+            "Segoe UI", Arial, sans-serif;
+        background: var(--background);
+        color: var(--text);
+    }
+
+    .container {
+        max-width: 1500px;
+        margin: auto;
+    }
+
+    /* Верхняя панель */
+
+    .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        background: var(--navy);
+        color: white;
+        padding: 25px 30px;
+        margin-bottom: 28px;
+        border-radius: 17px;
+        box-shadow: 0 8px 25px rgba(15, 23, 42, 0.09);
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .brand-icon {
+        width: 46px;
+        height: 46px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        border-radius: 13px;
+        background: #2563eb;
+        color: white;
+        font-size: 22px;
+        font-weight: 800;
+    }
+
+    .brand-name {
+        font-size: 18px;
+        font-weight: 750;
+        letter-spacing: -0.4px;
+    }
+
+    .brand-description {
+        margin-top: 4px;
+        color: #a8b4c7;
+        font-size: 12px;
+    }
+
+    .topbar-label {
+        padding: 8px 13px;
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 30px;
+        color: #cbd5e1;
+        font-size: 11px;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+
+    /* Статистика */
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        position: relative;
+        overflow: hidden;
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 5px 20px rgba(15, 23, 42, 0.035);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+    }
+
+    .stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 22px;
+    }
+
+    .stat-label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 650;
+    }
+
+    .stat-icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        font-size: 20px;
+    }
+
+    .stat-icon.blue {
+        background: #e8f0ff;
+        color: #2563eb;
+    }
+
+    .stat-icon.orange {
+        background: #fff3df;
+        color: #d97706;
+    }
+
+    .stat-icon.green {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .stat-value {
+        font-size: 34px;
+        font-weight: 750;
+        letter-spacing: -1px;
+        color: var(--text);
+        line-height: 1;
+    }
+
+    .stat-description {
+        margin-top: 9px;
+        color: #94a3b8;
+        font-size: 12px;
+    }
+
+    /* Панели разделов */
+
+    .section-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 25px;
+        box-shadow: 0 5px 20px rgba(15, 23, 42, 0.035);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 18px;
+    }
+
+    .section-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 750;
+        letter-spacing: -0.35px;
+        color: var(--text);
+    }
+
+    .section-description {
+        margin-top: 5px;
+        color: #94a3b8;
+        font-size: 12px;
+    }
+
+    /* Кнопки */
+
+    button {
+        border: none;
+        border-radius: 9px;
+        background: var(--blue);
+        color: white;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 650;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.2s;
+    }
+
+    button:hover {
+        background: var(--blue-hover);
+        transform: translateY(-1px);
+    }
+
+    button:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .refresh-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 15px;
+        white-space: nowrap;
+    }
+
+    .resolve-button {
+        display: block;
+        width: 100%;
+        min-width: 150px;
+        margin: 0 0 7px;
+        padding: 9px 12px;
+        font-size: 11px;
+    }
+
+    .resolve-sqlite {
+        background: #2563eb;
+    }
+
+    .resolve-sheets {
+        background: #0f766e;
+    }
+
+    .resolve-sqlite:hover {
+        background: #1d4ed8;
+    }
+
+    .resolve-sheets:hover {
+        background: #115e59;
+    }
+
+    /* Поиск и фильтры заявок */
+
+    .leads-toolbar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .leads-search {
+        flex: 1;
+        min-width: 180px;
+        padding: 11px 14px;
+        border: 1px solid #dbe2ec;
+        border-radius: 9px;
+        background: #fbfcfe;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+    }
+
+    .leads-search:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .leads-filter {
+        min-width: 160px;
+    }
+
+    @media (max-width: 520px) {
+        .leads-toolbar {
+            flex-direction: column;
+        }
+
+        .leads-search,
+        .leads-filter {
+            width: 100%;
+        }
+    }
+
+    /* Таблицы */
+
+    .table-wrapper {
+        overflow-x: auto;
+        border: 1px solid #edf0f5;
+        border-radius: 11px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 650px;
+    }
+
+    th, td {
+        padding: 15px 13px;
+        border-bottom: 1px solid #edf0f5;
+        text-align: left;
+        vertical-align: middle;
+        font-size: 12px;
+    }
+
+    th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr:hover {
+        background: #f8faff;
+    }
+
+    select {
+        max-width: 160px;
+        padding: 9px 30px 9px 11px;
+        border: 1px solid #dbe2ec;
+        border-radius: 8px;
+        background: #fbfcfe;
+        color: #334155;
+        font-family: inherit;
+        font-size: 11px;
+        cursor: pointer;
+        outline: none;
+    }
+
+    select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Сообщения */
+
+    #message, #logsMessage, #conflictsMessage {
+        margin: 0 0 12px;
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .success-message {
+        color: #15803d !important;
+    }
+
+    .error-message {
+        color: #b91c1c !important;
+    }
+
+    /* Уровни журнала */
+
+    .level {
+        display: inline-block;
+        padding: 5px 9px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 750;
+    }
+
+    .level-INFO {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .level-WARNING {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .level-ERROR {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .empty {
+        text-align: center;
+        color: #94a3b8;
+        padding: 35px 20px;
+        font-size: 12px;
+    }
+
+    .log-message {
+        min-width: 280px;
+        max-width: 550px;
+        overflow-wrap: anywhere;
+        line-height: 1.5;
+    }
+
+    .conflict-value {
+        min-width: 180px;
+        max-width: 350px;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+        line-height: 1.5;
+    }
+
+    .conflict-actions {
+        min-width: 170px;
+    }
+
+    /* Окно просмотра заявки */
+
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal {
+        width: 100%;
+        max-width: 540px;
+        background: white;
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: 0 25px 70px rgba(15, 23, 42, 0.2);
+        animation: modalAppear 0.2s ease;
+    }
+
+    @keyframes modalAppear {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .modal-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 750;
+    }
+
+    .modal-subtitle {
+        margin-top: 5px;
+        color: #94a3b8;
+        font-size: 12px;
+    }
+
+    .modal-close {
+        width: 34px;
+        height: 34px;
+        flex-shrink: 0;
+        margin: 0;
+        padding: 0;
+        background: #f1f5f9;
+        color: #64748b;
+        font-size: 20px;
+    }
+
+    .modal-close:hover {
+        background: #e2e8f0;
+        color: #172033;
+    }
+
+    .modal-field {
+        padding: 14px 0;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+    .modal-field:last-child {
+        border-bottom: none;
+    }
+
+    .modal-label {
+        margin-bottom: 6px;
+        color: #94a3b8;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .modal-value {
+        color: #172033;
+        font-size: 14px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    }
+
+    .modal-comment {
+        min-height: 45px;
+    }
+
+    .modal-input {
+        width: 100%;
+        padding: 11px 12px;
+        border: 1px solid #dbe2ec;
+        border-radius: 9px;
+        background: #fbfcfe;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 13px;
+        outline: none;
+    }
+
+    .modal-input:focus {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .modal-textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 24px;
+    }
+
+    .modal-actions button {
+        padding: 11px 17px;
+    }
+
+    .modal-cancel {
+        background: #e2e8f0;
+        color: #334155;
+    }
+
+    .modal-cancel:hover {
+        background: #cbd5e1;
+    }
+
+    .modal-message {
+        margin-top: 12px;
+        font-size: 12px;
+    }
+
+    #leadsTable tbody tr {
+        cursor: pointer;
+    }
+
+    #leadsTable select {
+        cursor: pointer;
+    }
+
+    @media (max-width: 520px) {
+        .modal {
+            padding: 21px;
+        }
+    }
+
+    /* Адаптация */
+
+    @media (max-width: 900px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 700px) {
         body {
-            font-family: Arial, sans-serif;
-            background: #f1f5f9;
-            padding: 30px;
-            color: #1e293b;
+            padding: 18px 12px;
         }
 
-        .container {
-            max-width: 1500px;
-            margin: auto;
-        }
-
-        h1 { margin-bottom: 25px; }
-        h2 { margin-top: 35px; margin-bottom: 15px; }
-
-        .table-wrapper {
-            background: white;
-            border-radius: 10px;
-            overflow-x: auto;
-            padding: 15px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 650px;
-        }
-
-        th, td {
-            padding: 13px;
-            border-bottom: 1px solid #e2e8f0;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        th {
-            background: #f8fafc;
-            white-space: nowrap;
-        }
-
-        select {
-            padding: 7px;
-            border: 1px solid #cbd5e1;
-            border-radius: 5px;
-        }
-
-        button {
-            padding: 9px 15px;
-            border: none;
-            border-radius: 5px;
-            background: #2563eb;
-            color: white;
-            cursor: pointer;
-            margin-bottom: 15px;
-        }
-
-        button:hover { background: #1d4ed8; }
-
-        button:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-        }
-
-        .resolve-button {
-            display: block;
-            width: 100%;
-            min-width: 150px;
-            margin: 0 0 7px 0;
-            font-size: 12px;
-        }
-
-        .resolve-sqlite {
-            background: #2563eb;
-        }
-
-        .resolve-sheets {
-            background: #0f766e;
-        }
-
-        .resolve-sqlite:hover {
-            background: #1d4ed8;
-        }
-
-        .resolve-sheets:hover {
-            background: #115e59;
-        }
-
-        #message, #logsMessage, #conflictsMessage {
-            margin-bottom: 15px;
-        }
-
-        .level {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 5px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .level-INFO {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .level-WARNING {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .level-ERROR {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .empty {
-            text-align: center;
-            color: #64748b;
+        .topbar {
             padding: 20px;
         }
 
-        .log-message {
-            min-width: 280px;
-            max-width: 550px;
-            overflow-wrap: anywhere;
+        .brand-name {
+            font-size: 16px;
         }
 
-        .conflict-value {
-            min-width: 180px;
-            max-width: 350px;
-            overflow-wrap: anywhere;
-            white-space: pre-wrap;
+        .topbar-label {
+            display: none;
         }
 
-        .success-message {
-            color: #15803d;
+        .section-card {
+            padding: 17px;
         }
 
-        .error-message {
-            color: #b91c1c;
+        .section-title {
+            font-size: 16px;
         }
 
-        .conflict-actions {
-            min-width: 170px;
+        .section-header {
+            align-items: flex-start;
         }
-    </style>
+
+        .refresh-button {
+            padding: 9px 11px;
+            font-size: 11px;
+        }
+
+        th, td {
+            padding: 12px 10px;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .stat-card {
+            padding: 20px;
+        }
+
+        .section-header {
+            flex-direction: column;
+        }
+
+        .refresh-button {
+            width: 100%;
+        }
+
+        .brand-description {
+            font-size: 11px;
+        }
+    }
+</style>
 </head>
 
 <body>
 <div class="container">
 
-    <h1>Заявки клиентов</h1>
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-icon">B</div>
+            <div>
+                <div class="brand-name">Business Automation Bridge</div>
+                <div class="brand-description">Управление заявками и синхронизацией данных</div>
+            </div>
+        </div>
 
-    <button onclick="loadLeads()">Обновить список</button>
+        <div class="topbar-label">ПАНЕЛЬ УПРАВЛЕНИЯ</div>
+    </header>
 
-    <div id="message"></div>
+    <!-- Статистика -->
 
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Имя</th>
-                    <th>Телефон</th>
-                    <th>Услуга</th>
-                    <th>Комментарий</th>
-                    <th>Дата</th>
-                    <th>Статус</th>
-                </tr>
-            </thead>
-            <tbody id="leadsTable"></tbody>
-        </table>
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <div class="stat-label">Всего заявок</div>
+                <div class="stat-icon blue">▤</div>
+            </div>
+            <div class="stat-value" id="totalLeads">—</div>
+            <div class="stat-description">Заявки в базе данных</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <div class="stat-label">Открытые конфликты</div>
+                <div class="stat-icon orange">⚠</div>
+            </div>
+            <div class="stat-value" id="totalConflicts">—</div>
+            <div class="stat-description">Требуют внимания администратора</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <div class="stat-label">События синхронизации</div>
+                <div class="stat-icon green">↻</div>
+            </div>
+            <div class="stat-value" id="totalLogs">—</div>
+            <div class="stat-description">Последние записи журнала</div>
+        </div>
+
     </div>
 
-    <h2>Открытые конфликты</h2>
+    <!-- Заявки -->
 
-    <button onclick="loadConflicts()">Обновить конфликты</button>
+    <section class="section-card">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Заявки клиентов</h2>
+                <div class="section-description">Все обращения, поступившие через форму</div>
+            </div>
+            <button class="refresh-button" onclick="loadLeads()">↻ Обновить список</button>
+        </div>
 
-    <div id="conflictsMessage"></div>
+        <div class="leads-toolbar">
+    <input
+        type="text"
+        id="leadSearch"
+        class="leads-search"
+        placeholder="Поиск по имени, телефону или услуге..."
+    >
 
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Дата обнаружения</th>
-                    <th>ID заявки</th>
-                    <th>Поле</th>
-                    <th>Значение SQLite</th>
-                    <th>Значение Google Sheets</th>
-                    <th>Разрешение</th>
-                </tr>
-            </thead>
-            <tbody id="conflictsTable"></tbody>
-        </table>
-    </div>
-
-    <h2>Журнал синхронизации</h2>
-
-    <button onclick="loadSyncLogs()">Обновить журнал</button>
-
-    <div id="logsMessage"></div>
-
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Время</th>
-                    <th>Уровень</th>
-                    <th>Операция</th>
-                    <th>ID заявки</th>
-                    <th>Описание</th>
-                </tr>
-            </thead>
-            <tbody id="logsTable"></tbody>
-        </table>
-    </div>
-
+    <select id="leadStatusFilter" class="leads-filter">
+        <option value="">Все статусы</option>
+        <option value="Новая">Новые</option>
+        <option value="В работе">В работе</option>
+        <option value="Завершена">Завершённые</option>
+    </select>
 </div>
 
+<div id="message"></div>
+
+<div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя</th>
+                        <th>Телефон</th>
+                        <th>Услуга</th>
+                        <th>Комментарий</th>
+                        <th>Дата</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody id="leadsTable"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Конфликты -->
+
+    <section class="section-card">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Открытые конфликты</h2>
+                <div class="section-description">Различия между данными SQLite и Google Sheets</div>
+            </div>
+            <button class="refresh-button" onclick="loadConflicts()">↻ Обновить конфликты</button>
+        </div>
+
+        <div id="conflictsMessage"></div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Дата обнаружения</th>
+                        <th>ID заявки</th>
+                        <th>Поле</th>
+                        <th>Значение SQLite</th>
+                        <th>Значение Google Sheets</th>
+                        <th>Разрешение</th>
+                    </tr>
+                </thead>
+                <tbody id="conflictsTable"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Журнал синхронизации -->
+
+    <section class="section-card">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Журнал синхронизации</h2>
+                <div class="section-description">История операций и системных событий</div>
+            </div>
+            <button class="refresh-button" onclick="loadSyncLogs()">↻ Обновить журнал</button>
+        </div>
+
+        <div id="logsMessage"></div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Время</th>
+                        <th>Уровень</th>
+                        <th>Операция</th>
+                        <th>ID заявки</th>
+                        <th>Описание</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTable"></tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+<div class="modal-overlay" id="leadModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+
+        <div class="modal-header">
+            <div>
+                <h2 class="modal-title" id="modalTitle">Заявка</h2>
+                <div class="modal-subtitle" id="modalId">Информация о клиенте</div>
+            </div>
+
+            <button class="modal-close" onclick="closeLeadModal()" aria-label="Закрыть">×</button>
+        </div>
+        <div id="modalView">
+        <div class="modal-field">
+            <div class="modal-label">Имя клиента</div>
+            <div class="modal-value" id="modalName">—</div>
+        </div>
+
+        <div class="modal-field">
+            <div class="modal-label">Телефон</div>
+            <div class="modal-value" id="modalPhone">—</div>
+        </div>
+
+        <div class="modal-field">
+            <div class="modal-label">Услуга</div>
+            <div class="modal-value" id="modalService">—</div>
+        </div>
+
+        <div class="modal-field">
+            <div class="modal-label">Статус</div>
+            <div class="modal-value" id="modalStatus">—</div>
+        </div>
+
+        <div class="modal-field">
+            <div class="modal-label">Дата создания</div>
+            <div class="modal-value" id="modalDate">—</div>
+        </div>
+
+        <div class="modal-field">
+            <div class="modal-label">Комментарий</div>
+            <div class="modal-value modal-comment" id="modalComment">—</div>
+        </div>
+        <div class="modal-actions">
+        <button type="button" onclick="startLeadEdit()">Редактировать</button>
+    </div>
+</div>
+<form id="editLeadForm" style="display: none;">
+
+    <div class="modal-field">
+        <label class="modal-label" for="editName">Имя клиента</label>
+        <input class="modal-input" id="editName" type="text" minlength="2" maxlength="100" required>
+    </div>
+
+    <div class="modal-field">
+        <label class="modal-label" for="editPhone">Телефон</label>
+        <input class="modal-input" id="editPhone" type="text" minlength="5" maxlength="30" required>
+    </div>
+
+    <div class="modal-field">
+        <label class="modal-label" for="editService">Услуга</label>
+        <input class="modal-input" id="editService" type="text" minlength="2" maxlength="100" required>
+    </div>
+
+    <div class="modal-field">
+        <label class="modal-label" for="editComment">Комментарий</label>
+        <textarea class="modal-input modal-textarea" id="editComment" maxlength="1000"></textarea>
+    </div>
+
+    <div class="modal-actions">
+        <button type="submit">Сохранить</button>
+        <button type="button" class="modal-cancel" onclick="cancelLeadEdit()">Отмена</button>
+    </div>
+
+    <div id="editMessage" class="modal-message"></div>
+
+</form>
+
+    </div>
+</div>
 <script>
+    let allLeads = [];
+    let currentLeadId = null;
     function formatDate(value) {
         if (!value) return "—";
 
@@ -245,98 +919,265 @@
 
         return String(value);
     }
+    function openLeadModal(lead) {
 
-    async function loadLeads() {
-        const table = document.getElementById("leadsTable");
-        const message = document.getElementById("message");
+        currentLeadId = lead.id;
+        document.getElementById("modalView").style.display = "block";
+        document.getElementById("editLeadForm").style.display = "none";
+        document.getElementById("editMessage").textContent = "";
 
-        message.textContent = "Загрузка...";
+        document.getElementById("modalId").textContent =
+            `Заявка №${lead.id}`;
+
+        document.getElementById("modalName").textContent =
+            lead.name || "—";
+
+        document.getElementById("modalPhone").textContent =
+            lead.phone || "—";
+
+        document.getElementById("modalService").textContent =
+            lead.service || "—";
+
+        document.getElementById("modalStatus").textContent =
+            lead.status || "—";
+
+        document.getElementById("modalDate").textContent =
+            formatDate(lead.created_at);
+
+        document.getElementById("modalComment").textContent =
+            lead.comment || "Комментарий отсутствует";
+
+        document.getElementById("leadModal").classList.add("active");
+    }
+
+    function closeLeadModal() {
+        document.getElementById("leadModal").classList.remove("active");
+    }
+
+    function startLeadEdit() {
+        const lead = allLeads.find(item => item.id === currentLeadId);
+
+        if (!lead) return;
+
+        document.getElementById("editName").value = lead.name || "";
+        document.getElementById("editPhone").value = lead.phone || "";
+        document.getElementById("editService").value = lead.service || "";
+        document.getElementById("editComment").value = lead.comment || "";
+
+        document.getElementById("editMessage").textContent = "";
+
+        document.getElementById("modalView").style.display = "none";
+        document.getElementById("editLeadForm").style.display = "block";
+    }
+
+    function cancelLeadEdit() {
+        document.getElementById("editLeadForm").style.display = "none";
+        document.getElementById("modalView").style.display = "block";
+        document.getElementById("editMessage").textContent = "";
+    }
+    async function saveLeadEdit(event) {
+        event.preventDefault();
+
+        if (currentLeadId === null) return;
+
+        const fields = {
+            name: document.getElementById("editName").value.trim(),
+            phone: document.getElementById("editPhone").value.trim(),
+            service: document.getElementById("editService").value.trim(),
+            comment: document.getElementById("editComment").value.trim()
+        };
+
+        const message = document.getElementById("editMessage");
+        message.textContent = "Сохранение...";
 
         try {
-            const response = await fetch("/api/leads");
-
-            if (!response.ok) {
-                throw new Error("Не удалось загрузить заявки");
-            }
-
-            const leads = await response.json();
-            table.replaceChildren();
-
-            leads.forEach(lead => {
-                const row = document.createElement("tr");
-
-                const values = [
-                    lead.id,
-                    lead.name,
-                    lead.phone,
-                    lead.service,
-                    lead.comment || "",
-                    lead.created_at
-                ];
-
-                values.forEach(value => {
-                    const cell = document.createElement("td");
-                    cell.textContent = value ?? "";
-                    row.appendChild(cell);
-                });
-
-                const statusCell = document.createElement("td");
-                const select = document.createElement("select");
-
-                ["Новая", "В работе", "Завершена"].forEach(status => {
-                    const option = document.createElement("option");
-                    option.value = status;
-                    option.textContent = status;
-                    select.appendChild(option);
-                });
-
-                select.value = lead.status;
-
-                select.addEventListener("change", async () => {
-                    const previousStatus = lead.status;
-                    select.disabled = true;
-
-                    try {
-                        const update = await fetch(
-                            `/api/leads/${lead.id}/status`,
-                            {
-                                method: "PATCH",
-                                headers: {
-                                    "Content-Type": "application/json"
-                                },
-                                body: JSON.stringify({
-                                    status: select.value
-                                })
-                            }
-                        );
-
-                        if (!update.ok) {
-                            throw new Error("Не удалось изменить статус");
-                        }
-
-                        lead.status = select.value;
-                        message.textContent =
-                            `Статус заявки №${lead.id} обновлён`;
-
-                    } catch (error) {
-                        message.textContent = error.message;
-                        select.value = previousStatus;
-                    } finally {
-                        select.disabled = false;
-                    }
-                });
-
-                statusCell.appendChild(select);
-                row.appendChild(statusCell);
-                table.appendChild(row);
+            const response = await fetch(`/api/leads/${currentLeadId}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(fields)
             });
 
-            message.textContent = `Заявок: ${leads.length}`;
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Не удалось сохранить изменения");
+            }
+
+            const lead = allLeads.find(item => item.id === currentLeadId);
+
+            if (lead) {
+                Object.assign(lead, fields);
+            }
+
+            renderLeads();
+            openLeadModal(lead);
+
+            document.getElementById("modalId").textContent =
+                `Заявка №${currentLeadId} — изменения сохранены`;
 
         } catch (error) {
             message.textContent = error.message;
+            message.style.color = "#dc2626";
         }
     }
+    document.getElementById("editLeadForm").addEventListener(
+        "submit",
+        saveLeadEdit
+    );
+    document.getElementById("leadModal").addEventListener("click", event => {
+        if (event.target.id === "leadModal") {
+            closeLeadModal();
+        }
+    });
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            closeLeadModal();
+        }
+    });
+
+    function renderLeads() {
+    const table = document.getElementById("leadsTable");
+    const search = document.getElementById("leadSearch")
+        .value.toLowerCase().trim();
+    const statusFilter = document.getElementById("leadStatusFilter").value;
+
+    table.replaceChildren();
+
+    const filteredLeads = allLeads.filter(lead => {
+        const matchesSearch = [
+            lead.name,
+            lead.phone,
+            lead.service
+        ].some(value =>
+            String(value ?? "").toLowerCase().includes(search)
+        );
+
+        const matchesStatus =
+            !statusFilter || lead.status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+    });
+
+    if (filteredLeads.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 7;
+        cell.className = "empty";
+        cell.textContent = "Заявки не найдены";
+
+        row.appendChild(cell);
+        table.appendChild(row);
+    }
+
+    filteredLeads.forEach(lead => {
+        const row = document.createElement("tr");
+        row.addEventListener("click", event => {
+            if (event.target.closest("select, button")) return;
+
+            openLeadModal(lead);
+        });
+
+        const values = [
+            lead.id,
+            lead.name,
+            lead.phone,
+            lead.service,
+            lead.comment || "",
+            formatDate(lead.created_at)
+        ];
+
+        values.forEach(value => {
+            const cell = document.createElement("td");
+            cell.textContent = value ?? "";
+            row.appendChild(cell);
+        });
+
+        const statusCell = document.createElement("td");
+        const select = document.createElement("select");
+
+        ["Новая", "В работе", "Завершена"].forEach(status => {
+            const option = document.createElement("option");
+            option.value = status;
+            option.textContent = status;
+            select.appendChild(option);
+        });
+
+        select.value = lead.status;
+
+        select.addEventListener("change", async () => {
+            const previousStatus = lead.status;
+            select.disabled = true;
+
+            try {
+                const update = await fetch(
+                    `/api/leads/${lead.id}/status`,
+                    {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            status: select.value
+                        })
+                    }
+                );
+
+                if (!update.ok) {
+                    throw new Error("Не удалось изменить статус");
+                }
+
+                lead.status = select.value;
+
+                document.getElementById("message").textContent =
+                    `Статус заявки №${lead.id} обновлён`;
+
+                renderLeads();
+
+            } catch (error) {
+                document.getElementById("message").textContent =
+                    error.message;
+
+                select.value = previousStatus;
+                select.disabled = false;
+            }
+        });
+
+        statusCell.appendChild(select);
+        row.appendChild(statusCell);
+        table.appendChild(row);
+    });
+
+    document.getElementById("message").textContent =
+        `Показано заявок: ${filteredLeads.length} из ${allLeads.length}`;
+}
+
+async function loadLeads() {
+    const message = document.getElementById("message");
+
+    message.textContent = "Загрузка...";
+
+    try {
+        const response = await fetch("/api/leads");
+
+        if (!response.ok) {
+            throw new Error("Не удалось загрузить заявки");
+        }
+
+        allLeads = await response.json();
+
+        document.getElementById("totalLeads").textContent =
+            allLeads.length;
+
+        renderLeads();
+
+    } catch (error) {
+        message.textContent = error.message;
+    }
+}
 
     async function loadSyncLogs() {
         const table = document.getElementById("logsTable");
@@ -352,6 +1193,7 @@
             }
 
             const logs = await response.json();
+            document.getElementById("totalLogs").textContent = logs.length;
             table.replaceChildren();
 
             if (logs.length === 0) {
@@ -476,6 +1318,7 @@
             }
 
             const conflicts = await response.json();
+            document.getElementById("totalConflicts").textContent = conflicts.length;
             table.replaceChildren();
 
             if (conflicts.length === 0) {
@@ -558,6 +1401,16 @@
             message.textContent = error.message;
         }
     }
+
+    document.getElementById("leadSearch").addEventListener(
+        "input",
+        renderLeads
+    );
+
+    document.getElementById("leadStatusFilter").addEventListener(
+        "change",
+        renderLeads
+    );
 
     loadLeads();
     loadSyncLogs();

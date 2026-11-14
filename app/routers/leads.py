@@ -8,10 +8,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.auth import verify_admin
 from app.database.db import (
     save_lead,
+    get_lead,
     get_all_leads,
     get_sync_logs,
     get_open_conflicts,
     update_status,
+    update_lead_fields,
     EDITABLE_FIELDS
 )
 from app.services.telegram import send_notification
@@ -21,8 +23,10 @@ from app.database.db import (
     apply_sync_conflict_resolution,
     log_sync_event,
 )
-
-from app.services.google_sheets import update_sheet_conflict_value
+from app.services.google_sheets import (
+    update_sheet_conflict_value,
+    update_sheet_lead,
+)
 from app.services.sync_scheduler import sync_lock
 
 router = APIRouter(prefix="/api", tags=["Leads"])
@@ -39,6 +43,14 @@ class Lead(BaseModel):
 
 class StatusUpdate(BaseModel):
     status: Literal["Новая", "В работе", "Завершена"]
+
+class LeadUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str | None = Field(default=None, min_length=2, max_length=100)
+    phone: str | None = Field(default=None, min_length=5, max_length=30)
+    service: str | None = Field(default=None, min_length=2, max_length=100)
+    comment: str | None = Field(default=None, max_length=1000)
 
 class ConflictResolution(BaseModel):
     source: Literal["sqlite", "sheets"]
@@ -102,6 +114,70 @@ async def update_lead_status(lead_id: int, data: StatusUpdate):
         "status": data.status,
     }
 
+@router.patch(
+    "/leads/{lead_id}",
+    dependencies=[Depends(verify_admin)],
+)
+async def edit_lead(lead_id: int, data: LeadUpdate):
+    fields = data.model_dump(exclude_unset=True)
+
+    if not fields:
+        raise HTTPException(
+            status_code=400,
+            detail="Не указаны поля для обновления",
+        )
+
+    if any(value is None for value in fields.values()):
+        raise HTTPException(
+            status_code=422,
+            detail="Поля не могут иметь значение null",
+        )
+
+    async with sync_lock:
+        current_lead = await asyncio.to_thread(get_lead, lead_id)
+
+        if current_lead is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Заявка не найдена",
+            )
+
+        sheet_updated = await asyncio.to_thread(
+            update_sheet_lead,
+            lead_id,
+            fields,
+        )
+
+        if not sheet_updated:
+            raise HTTPException(
+                status_code=502,
+                detail="Не удалось обновить заявку в Google Sheets",
+            )
+
+        updated = await asyncio.to_thread(
+            update_lead_fields,
+            lead_id,
+            fields,
+        )
+
+        if not updated:
+            raise HTTPException(
+                status_code=500,
+                detail="Не удалось обновить заявку в базе данных",
+            )
+        await asyncio.to_thread(
+            log_sync_event,
+            "INFO",
+            "MANUAL_EDIT",
+            f"Администратор изменил поля: {', '.join(fields.keys())}",
+            lead_id,
+        )
+
+    return {
+        "success": True,
+        "lead_id": lead_id,
+        "updated_fields": list(fields.keys()),
+    }
 
 @router.get(
     "/sync-logs",
